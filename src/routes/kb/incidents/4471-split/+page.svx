@@ -1,0 +1,51 @@
+---
+layout: runbook
+title: '#4471 split · the date bugs it holds'
+owner: Aga
+status: proposed
+reviewed: 2026-10-28
+signature: v1.eyJzdWIiOiIzNzcxIiwiYXVkIjoiY2hhbGxlbmdlOndoYXQtaXQtc2hvd3MiLCJpYXQiOjE3OTMyMTk1MzcsImV4cCI6MTc5MzMwNTkzN30.MpZELNw6KkH8gWNxJfOFRaYj96basjER18uODTwvMwE
+---
+
+<script>
+  import SplitTable from '#lib/kb/SplitTable.svelte';
+  import RenderStamp from '#lib/kb/RenderStamp.svelte';
+  import Callout from '#lib/kb/Callout.svelte';
+
+  const repo = 'https://github.com/ajczyzewska/s01e03-what-it-shows/issues';
+  const issues = { parser: `${repo}/1`, hint: `${repo}/2`, 'one-day shift': `${repo}/3` };
+</script>
+
+[#4471](/kb/incidents/4471) says one issue, one fix queued. Its reports hold more than one bug.
+They were merged on subject line ([decision 0001](/kb/decisions/0001-dedupe-by-subject)), and the
+subject only says "the date is wrong". It never says why.
+
+<Callout kind="warn">
+The fix queued under #4471 fixes the parser only. The other rows below stay broken after it ships.
+</Callout>
+
+## What #4471 holds
+
+<SplitTable ticket={4471} {issues} />
+
+## How each report was placed
+
+- **`parser`**: the shared parser reads dates month first, and every tenant on file writes the day
+  first, so day and month come out flipped. Placed by `causeOf()` in `causes.ts`, by tenant and
+  channel, not by `intakeTag`.
+- **`hint`**: the booking-v3 form prints `MM/DD/YYYY` to day-first tenants. People type what the hint
+  says and the form reads it day first. Only reports through the form of a booking-v3 tenant.
+  Fixing the parser does not touch these.
+- **`one-day shift`**: the date is not flipped, it moves by a day, and people in different places see
+  different days for one booking. These are the reports in `desk-notes.json` (`oneDayMove`). The
+  #4471 page counts them under `parser` and only footnotes them.
+
+Each row has its own ticket with its count and example reports.
+
+## For triage
+
+Two reports with the same subject can have different causes, and two with different subjects can
+share one. Before merging into a big ticket, check the tenant and channel with the
+[explorer](/kb/triage/dedupe), and read the body: a one-day move is not a month/day flip.
+
+<RenderStamp {signature} />
